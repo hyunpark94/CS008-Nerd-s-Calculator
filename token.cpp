@@ -1,4 +1,4 @@
-#include "token.h"
+    #include "token.h"
 
 const bool& token::isOperator() const
 {
@@ -31,10 +31,17 @@ token::token(const fraction &other)
     *this = other;
 }
 
+token::token(const token &other)
+{
+    thevalue = other.thevalue;
+    theOp = other.theOp;
+    Operator = other.Operator;
+}
+
 token& token::operator=(const char &other)
 {
     theOp = other;
-    isOperator() = true;
+    Operator = true;
     thevalue = mixed();
 }
 
@@ -42,15 +49,26 @@ token& token::operator=(const mixed &other)
 {
     thevalue = other;
     theOp = NULL;
-    isOperator() = false;
+    Operator = false;
     return*this;
+}
+
+token& token::operator=(const token &other)
+{
+    if (this != &other)
+    {
+    thevalue = other.thevalue;
+    theOp = other.theOp;
+    Operator = other.Operator;
+    }
+    return *this;
 }
 
 token& token::operator=(const fraction &other)
 {
     thevalue = other;
     theOp = NULL;
-    isOperator() = false;
+    Operator = false;
     return*this;
 }
 
@@ -58,7 +76,7 @@ token& token::operator=(const double &other)
 {
     thevalue = other;
     theOp = NULL;
-    isOperator() = false;
+    Operator = false;
     return*this;
 }
 
@@ -66,7 +84,7 @@ token& token::operator=(const int &other)
 {
     thevalue = other;
     theOp = NULL;
-    isOperator() = false;
+    Operator = false;
     return*this;
 }
 
@@ -93,13 +111,14 @@ token::token(char o)
     allOps['*'] = &token::times;
     allOps['/'] = &token::divide;
     allOps['^'] = &token::power;
+    allOps['('] = &token::parentheses;
 
     allPriorities['+'] = 1;
     allPriorities['-'] = 1;
     allPriorities['*'] = 2;
     allPriorities['/'] = 2;
     allPriorities['^'] = 3;
-    allPriorities['('] = 4;
+    allPriorities['('] = 0;
     allPriorities[')'] = 4;
 }
 
@@ -141,6 +160,19 @@ token token::divide (const token &x, const token &y)
 token token::power (const token &x, const token &y)
 {
     return token(x.value() ^ y.value());
+}
+
+token token::parentheses (const token &x, const token &y)
+{
+//    try
+//    {
+        throw MISSING_RIGHT_PARENTHESES;
+//    }
+//    catch (TOKEN_ERRORS e)
+//    {
+//        cout << "Missing parentheses!\n";
+//        exit(0);
+//    }
 }
 
 bool operator<(const token x, const token y)
@@ -189,7 +221,7 @@ std::istream& operator>>(std::istream& in, token &t)
     std::string line;
     std::stringstream ss;
     getline(in, line);
-    if (isdigit(line[0]))
+    if (line.find_first_of("0123456789") != string::npos)
     {
         mixed m;
         ss << line;
@@ -198,10 +230,7 @@ std::istream& operator>>(std::istream& in, token &t)
     }
     else
     {
-        char c;
-        ss << line;
-        ss.get(c);
-        t = c;
+        t = line[0];
     }
     return in;
 

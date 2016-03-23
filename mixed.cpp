@@ -96,6 +96,11 @@ void mixed::value(const fraction &x)
 
 ostream& operator<<(ostream& out, const mixed &number)
 {
+    if (number.setdecimal())
+    {
+        cout << (double)number.numerator()/number.denominator();
+        return out;
+    }
     if (number.denominator() != 1)
     {
     if (abs(number.numerator())>=number.denominator())
@@ -110,22 +115,84 @@ ostream& operator<<(ostream& out, const mixed &number)
 
 istream& operator>>(istream& in, mixed &number)
 {
+    int w=0, n=0, d=1;
+    double c;
+    stringstream ss;
+    char junk;
     string line;
-    fraction num, denom(1);
-    in >> line;
-    size_t space = line.find(' '), slash = line.find('/');
-    if (space != string::npos && slash != string::npos)
+
+    getline(in,line);
+//    cout<<"line = "<<line<<endl;
+    ss << line;
+
+    if (line.find_first_not_of("0123456789 .-/") != string::npos)
+        throw MISFORMED;
+
+    size_t dot = line.find('.');
+    if (dot != string::npos)
     {
-        num = stod(line.substr(0,space)) * stod(line.substr(slash+1)) + stod(line.substr(space+1, slash));
-        denom = stod(line.substr(0,space));
+        if (line.find_first_of("+/*^") != string::npos)
+            throw MISFORMED;
+        else if (line.find_first_of("-.", dot+1) != string::npos)
+            throw MISFORMED;
+        ss >> c;
+        number = c;
+        return in;
     }
-    else if (slash != string::npos)
-    {
-        num = stod(line.substr(0,slash));
-        denom = stod(line.substr(slash+1));
-    }
-    else
-        num = stod(line);
-    number = num/denom;
+
+    size_t first_num, space, second_num, slash, minus;
+
+    first_num = line.find_first_of("0123456789");
+
+    space = line.find(' ', first_num+1);
+
+    second_num = line.find_first_of("0123456789", space);
+
+    slash = line.find('/', first_num);
+    if (slash != string::npos && line.find_first_not_of("0123456789 ", slash+1) != string::npos)
+        throw MISFORMED;
+
+    if (slash != string::npos && !isdigit(line[slash-1]))
+        throw MISFORMED;
+    minus = line.find('-');
+    if (minus != string::npos && line.find_first_not_of("0123456789 /", minus+1) != string::npos )
+        throw MISFORMED;
+
+        if(space>first_num && second_num != string::npos)
+        {
+            ss >> w >> n >> junk >> d ;
+
+            if(n < 0 || d < 0)
+                  throw NEGATIVE_NUM;
+
+            if(w < 0)
+                n*=-1;
+
+    //        cout << "w = " << w << endl << "n = " << n << endl << "d = " << d << endl;
+        }
+
+        else if (slash != string::npos)
+        {
+
+            ss >> n >> junk >> d;
+
+            if(d <= 0)
+                throw NEGATIVE_NUM;
+
+        }
+
+        else
+        {
+            ss >> n;
+        }
+//    }
+//    catch (MFRACTION_ERRORS e)
+//    {
+//        cout << "Inappropriate negative number for fraction!\n";
+//        exit(0);
+//    }
+
+    number = mixed(w, n, d);
+//    cout<<"Number = "<<number<<endl;
     return in;
 }

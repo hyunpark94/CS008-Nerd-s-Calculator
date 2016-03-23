@@ -2,6 +2,8 @@
 #define TOKEN
 #include "mixed.h"
 
+enum TOKEN_ERRORS{MISSING_RIGHT_PARENTHESES};
+
 class token
 {
 public:
@@ -13,12 +15,14 @@ public:
     token(const double &other);
     token(const int &other);
     token(const fraction &other);
+    token(const token &other);
 
     token& operator=(const char &other);
     token& operator=(const fraction &other);
     token& operator=(const double &other);
     token& operator=(const int &other);
     token& operator=(const mixed &other);
+    token& operator=(const token &other);
 
     const bool& isOperator() const;
     bool& isOperator();
@@ -57,7 +61,7 @@ public:
     std::ostream& operator<<(std::ostream& out, const token &t);
 
     friend
-    std::istream& operator>>(std::ostream& in, const token &t);
+    std::istream& operator>>(std::istream& in, token &t);
 
 
 
@@ -74,6 +78,7 @@ private:
     static token times (const token &x, const token &y);
     static token divide (const token &x, const token &y);
     static token power (const token &x, const token &y);
+    static token parentheses(const token &x, const token &y);
 };
 
 #endif // TOKEN

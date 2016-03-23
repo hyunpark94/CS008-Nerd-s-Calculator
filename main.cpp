@@ -1,77 +1,76 @@
 #include <iostream>
+#include <fstream>
 
 #include "mixed.h"
 #include "stack.h"
 #include "queue.h"
+#include "parser.h"
 #include "shuntingyard.h"
+#include "memory.h"
+#include "instruction.h"
 
 using namespace std;
 
-queue<token> makeRPN (const queue<token> &other);
+void capitalizeString(string &line);
+void calculation(string &line, memory mem);
 
 
 int main()
 {
+    string line;
+    memory mem;
+    instruction instruct;
 
-    queue<token> infixq, rpnq;
-    token a(5), b('*'), c(3);
-    shuntingyard yard;
+    cout<<"Please enter expression: ";
+    getline(cin, line);
 
-    infixq.push(a);
-    infixq.push(b);
-    infixq.push(c);
-
-    rpnq = infixq;
-
-    cout<<makeRPN(rpnq);
-
-    cout << infixq;
+    while (line!="")
+    {
+        capitalizeString(line);
+        if(line.find("EXIT") < string::npos || line.find("QUIT") < string::npos
+                || line.find("LOAD") < string::npos || line.find("READ") < string::npos
+                || line.find("CLEAR") < string::npos || line.find("WRITE") < string::npos)
+        {
+            if(instruct.perform(line, mem))
+                return 0;
+        }
+        else
+            {
+                if (line.find('=') != string::npos)
+                    try{
+                    mem.store(line);
+                }
+                catch(...)
+                {
+                    cout<<"Invalid memory expression!"<<endl;
+                }
+                else
+                {
+                    try{
+                    line = mem.replaceVars(line);
+                    parser p;
+                    p.feed(line);
+                    cout<<shuntingyard::calculate(shuntingyard::makeRPN(p.getQue()))<<endl;
+                     }
+                    catch (...)
+                    {cout<<"Invalid Expression!"<<endl;}
+                }
+            }
+        cout<<"Please enter expression: ";
+        getline(cin, line);
+    }
 
     return 0;
 }
+// Adding stuff!
 
-queue<token> makeRPN (const queue<token> &other)
+void capitalizeString(string &line)
 {
-    queue<token> infixq = other;
-    stack<token> op_stack;
-    queue<token> rpnq;
-
-    while (!infixq.empty())
+    for(int i = 0; i < line.length(); ++i)
     {
-        token o1 = infixq.front();
-        infixq.pop();
-        if (o1.isOperator())
-        {
-            if (o1.op() == '(')
-                op_stack.push(o1);
-            else if (o1.op() == ')')
-            {
-                while (op_stack.top().op()!= '(')
-                {
-                    rpnq.push(op_stack.top());
-                    op_stack.pop();
-                }
-                op_stack.pop();
-            }
-            else
-            {
-                while (op_stack.empty() && op_stack.top() <= o1)
-                {
-                    rpnq.push(op_stack.top());
-                    op_stack.pop();
-                }
-                op_stack.push(o1);
-            }
-        }
-        else
-        {
-            rpnq.push(o1);
-        }
+        if(line[i] > 96 && line[i] < 123)
+            line[i] -= 32;
     }
-    while (!op_stack.empty())
-    {
-        rpnq.push(op_stack.top());
-        op_stack.pop();
-    }
-    return rpnq;
 }
+
+
